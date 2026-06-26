@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expense Dashboard</title>
+    <style>
+      :root {
+        --paper: #f7f9fb;
+        --ink: #17202a;
+        --line: #d7dee8;
+        --brand: #1f766e;
+        --accent: #b86112;
+        --muted: #5f6f80;
+        --danger: #ad2f2f;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        border-bottom: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(10px);
+      }
+      .wrap { width: min(1260px, calc(100% - 40px)); margin: 0 auto; }
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 16px 0;
+      }
+      h1, h2, h3, p { margin: 0; }
+      h1 { margin-top: 3px; font-size: 28px; line-height: 1.15; }
+      h2 { font-size: 18px; }
+      h3 { font-size: 15px; }
+      .eyebrow {
+        color: var(--brand);
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .roles, .actions, .tabs, .exports {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      button {
+        min-height: 38px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: white;
+        color: var(--ink);
+        padding: 8px 12px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      button:hover { border-color: var(--brand); }
+      button.active, .primary {
+        border-color: var(--brand);
+        background: var(--brand);
+        color: white;
+      }
+      button.danger { color: var(--danger); border-color: #efb6b6; }
+      button.accent { color: var(--accent); border-color: #efc88f; }
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+      main {
+        display: grid;
+        gap: 22px;
+        padding: 24px 0 36px;
+      }
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(150px, 1fr));
+        gap: 14px;
+      }
+      .card, .panel {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: white;
+        box-shadow: 0 1px 2px rgba(23, 32, 42, 0.08);
+      }
+      .card { padding: 16px; }
+      .panel { padding: 20px; }
+      .panel-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+      .title-left {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+      .icon { color: var(--brand); font-weight: 900; }
+      .label { color: var(--muted); font-size: 14px; }
+      .value { margin-top: 9px; font-size: 26px; font-weight: 800; }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 22px;
+      }
+      .grid-2.reverse { grid-template-columns: 0.95fr 1.05fr; }
+      form { display: grid; gap: 12px; }
+      .fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      label {
+        display: grid;
+        gap: 5px;
+        font-size: 14px;
+        font-weight: 700;
+      }
+      input, select, textarea {
+        min-height: 40px;
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 8px 10px;
+        color: var(--ink);
+        font: inherit;
+      }
+      textarea { min-height: 82px; resize: vertical; }
+      .scroll { overflow-x: auto; }
+      table {
+        width: 100%;
+        min-width: 760px;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      th {
+        color: var(--muted);
+        font-weight: 800;
+        text-align: left;
+      }
+      th, td {
+        border-bottom: 1px solid var(--line);
+        padding: 12px 8px;
+        vertical-align: top;
+      }
+      .pill {
+        display: inline-flex;
+        border: 1px solid;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .Pending { border-color: #f3d28a; background: #fff8e8; color: #855500; }
+      .Approved { border-color: #a9dfc6; background: #eefaf4; color: #17613f; }
+      .Rejected { border-color: #f0b7b7; background: #fff1f1; color: #a12727; }
+      .Reimbursed { border-color: #9fd3f1; background: #edf8ff; color: #145f87; }
+      .workflow {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-bottom: 16px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 800;
+      }
+      .workflow div {
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 12px 8px;
+      }
+      .expense-card {
+        display: grid;
+        gap: 11px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 12px;
+      }
+      .expense-card + .expense-card { margin-top: 12px; }
+      .expense-head {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .report-layout {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 18px;
+      }
+      .report-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+      .wide { grid-column: 1 / -1; }
+      .bar-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 14px;
+        margin-top: 13px;
+      }
+      .bar {
+        height: 8px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #edf1f5;
+      }
+      .bar span {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+        background: var(--brand);
+      }
+      .notice {
+        display: none;
+        border: 1px solid #b5d8d4;
+        border-radius: 8px;
+        background: #eff9f7;
+        color: #195d56;
+        padding: 10px 12px;
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .notice.show { display: block; }
+      .muted { color: var(--muted); }
+      .hide { display: none !important; }
+      @media (max-width: 980px) {
+        .topbar, .grid-2, .grid-2.reverse, .report-layout {
+          display: grid;
+          grid-template-columns: 1fr;
+        }
+        .metrics, .report-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      @media (max-width: 640px) {
+        .wrap { width: min(100% - 24px, 1260px); }
+        .metrics, .fields, .workflow, .report-cards { grid-template-columns: 1fr; }
+        h1 { font-size: 24px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap topbar">
+        <div>
+          <p class="eyebrow">Expense Reimbursement</p>
+          <h1>Employee Expense Dashboard</h1>
+        </div>
+        <div class="roles" aria-label="Role selector">
+          <button class="active" data-role="Admin">Admin</button>
+          <button data-role="Manager">Manager</button>
+          <button data-role="Finance">Finance</button>
+          <button data-role="Employee">Employee</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div class="notice" id="notice"></div>
+      <section class="metrics" id="metrics"></section>
+
+      <section class="grid-2">
+        <div class="panel" id="employee-panel">
+          <div class="panel-title">
+            <div class="title-left"><span class="icon">EMP</span><h2>Employee Management</h2></div>
+            <button type="button" id="reset-demo">Reset Demo</button>
+          </div>
+          <form id="employee-form">
+            <input type="hidden" id="employee-edit-id" />
+            <div class="fields">
+              <label>Employee ID<input id="employee-id" placeholder="Auto generated if blank" /></label>
+              <label>Name<input id="employee-name" required placeholder="Employee name" /></label>
+              <label>Email<input id="employee-email" required type="email" placeholder="name@example.com" /></label>
+              <label>Department<input id="employee-department" required placeholder="Department" /></label>
+              <label>Designation<input id="employee-designation" required placeholder="Designation" /></label>
+              <label>Manager<select id="employee-manager"></select></label>
+            </div>
+            <button class="primary" type="submit" id="employee-submit">Add Employee</button>
+          </form>
+          <div class="scroll">
+            <table>
+              <thead>
+                <tr><th>Employee ID</th><th>Name</th><th>Email</th><th>Department</th><th>Designation</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="employee-rows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel" id="expense-panel">
+          <div class="panel-title">
+            <div class="title-left"><span class="icon">EXP</span><h2 id="expense-title">Submit Expense</h2></div>
+          </div>
+          <form id="expense-form">
+            <label>Employee<select id="expense-employee"></select></label>
+            <label>Expense Title<input id="expense-name" required placeholder="Expense title" /></label>
+            <div class="fields">
+              <label>Category<select id="expense-category"></select></label>
+              <label>Amount<input id="expense-amount" required min="1" type="number" placeholder="0" /></label>
+            </div>
+            <label>Date<input id="expense-date" required type="date" /></label>
+            <label>Description<textarea id="expense-description" placeholder="Details for approvers"></textarea></label>
+            <label>Receipt Upload<input id="expense-receipt" type="file" /></label>
+            <button class="primary" type="submit">Submit Expense</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="grid-2 reverse">
+        <div class="panel">
+          <div class="panel-title">
+            <div class="title-left"><span class="icon">FLOW</span><h2 id="workflow-title">Approval Workflow</h2></div>
+          </div>
+          <div class="workflow">
+            <div>Employee<br />v</div>
+            <div>Manager Approval<br />v</div>
+            <div>Finance Approval<br />v</div>
+            <div>Reimbursed</div>
+          </div>
+          <div id="approval-list"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">
+            <div class="title-left"><span class="icon">HIST</span><h2 id="history-title">Expense History</h2></div>
+          </div>
+          <div class="scroll">
+            <table>
+              <thead>
+                <tr><th>Expense Title</th><th>Employee</th><th>Category</th><th>Date</th><th>Amount</th><th>Status</th><th>Receipt</th></tr>
+              </thead>
+              <tbody id="expense-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">
+          <div class="title-left"><span class="icon">REP</span><h2 id="reports-title">Reports</h2></div>
+        </div>
+        <div class="report-layout">
+          <div>
+            <form id="report-form">
+              <label>Expense Reports
+                <select id="report-period">
+                  <option>Daily</option>
+                  <option>Weekly</option>
+                  <option selected>Monthly</option>
+                </select>
+              </label>
+              <label>Report Type
+                <select id="report-grouping">
+                  <option>Employee-wise</option>
+                  <option selected>Category-wise</option>
+                  <option>Status-wise</option>
+                </select>
+              </label>
+              <div class="exports">
+                <button type="button" data-export="PDF">PDF</button>
+                <button type="button" data-export="Excel">Excel</button>
+                <button type="button" data-export="CSV">CSV</button>
+              </div>
+            </form>
+          </div>
+          <div class="report-cards" id="report-output"></div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const categories = ["Food", "Travel", "Accommodation", "Fuel", "Internet", "Office Supplies", "Medical", "Miscellaneous"];
+      const seed = {
+        employees: [
+          { id: "EMP-1001", name: "Aarav Mehta", email: "aarav.mehta@example.com", department: "Engineering", designation: "Frontend Engineer", managerId: "EMP-2001" },
+          { id: "EMP-1002", name: "Maya Iyer", email: "maya.iyer@example.com", department: "Sales", designation: "Account Executive", managerId: "EMP-2001" },
+          { id: "EMP-2001", name: "Nisha Rao", email: "nisha.rao@example.com", department: "Operations", designation: "Manager", managerId: "" },
+          { id: "EMP-3001", name: "Kabir Sethi", email: "kabir.sethi@example.com", department: "Finance", designation: "Finance Analyst", managerId: "" }
+        ],
+        expenses: [
+          { id: "EXP-501", employeeId: "EMP-1001", title: "Client visit cab fare", category: "Travel", amount: 1850, date: "2026-06-18", description: "Airport transfers for a client workshop.", status: "Pending", receiptName: "cab-invoice.pdf", managerDecision: "Pending", financeDecision: "Pending" },
+          { id: "EXP-502", employeeId: "EMP-1002", title: "Team lunch", category: "Food", amount: 4200, date: "2026-06-12", description: "Lunch during quarterly sales planning.", status: "Approved", receiptName: "restaurant-bill.jpg", managerDecision: "Approved", financeDecision: "Pending" },
+          { id: "EXP-503", employeeId: "EMP-1001", title: "Broadband reimbursement", category: "Internet", amount: 1299, date: "2026-06-04", description: "Monthly home internet reimbursement.", status: "Reimbursed", receiptName: "internet-june.pdf", managerDecision: "Approved", financeDecision: "Approved" },
+          { id: "EXP-504", employeeId: "EMP-1002", title: "Conference hotel", category: "Accommodation", amount: 9800, date: "2026-05-29", description: "Two-night stay for partner conference.", status: "Rejected", receiptName: "hotel-tax-invoice.pdf", managerDecision: "Rejected", financeDecision: "Pending" }
+        ]
+      };
+
+      let state = loadState();
+      let currentRole = "Admin";
+
+      const money = (amount) => "INR " + Number(amount || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 });
+      const byId = (id) => document.getElementById(id);
+      const employeeName = (id) => state.employees.find((employee) => employee.id === id)?.name || id;
+      const currentEmployeeId = () => state.employees[0]?.id || "";
+      const visibleExpenses = () => currentRole === "Employee"
+        ? state.expenses.filter((expense) => expense.employeeId === currentEmployeeId())
+        : state.expenses;
+
+      function loadState() {
+        const stored = localStorage.getItem("expense-dashboard-state");
+        return stored ? JSON.parse(stored) : structuredClone(seed);
+      }
+
+      function saveState() {
+        localStorage.setItem("expense-dashboard-state", JSON.stringify(state));
+      }
+
+      function notice(message) {
+        const box = byId("notice");
+        box.textContent = message;
+        box.classList.add("show");
+        setTimeout(() => box.classList.remove("show"), 2600);
+      }
+
+      function render() {
+        renderRoleChrome();
+        renderMetrics();
+        renderSelectors();
+        renderEmployees();
+        renderApprovals();
+        renderExpenses();
+        renderReports();
+      }
+
+      function renderRoleChrome() {
+        document.querySelectorAll("[data-role]").forEach((button) => {
+          button.classList.toggle("active", button.dataset.role === currentRole);
+        });
+        const employeeOnly = currentRole === "Employee";
+        byId("employee-panel").classList.toggle("hide", employeeOnly);
+        byId("expense-title").textContent = employeeOnly ? "Submit My Expense" : "Submit Expense";
+        byId("workflow-title").textContent = {
+          Admin: "Approval Workflow",
+          Manager: "Manager Approval Queue",
+          Finance: "Finance Reimbursement Queue",
+          Employee: "My Approval Status"
+        }[currentRole];
+        byId("history-title").textContent = {
+          Admin: "Expense History",
+          Manager: "Team Expense History",
+          Finance: "Approved Claims",
+          Employee: "My Expense History"
+        }[currentRole];
+        byId("reports-title").textContent = {
+          Admin: "Reports",
+          Manager: "Team Expense Reports",
+          Finance: "Finance Reports",
+          Employee: "My Claims"
+        }[currentRole];
+      }
+
+      function renderMetrics() {
+        const expenses = visibleExpenses();
+        const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+        const metricSets = {
+          Admin: [
+            ["Total Employees", state.employees.length],
+            ["Total Expenses Submitted", state.expenses.length],
+            ["Pending Approvals", state.expenses.filter((expense) => expense.status === "Pending").length],
+            ["Approved Expenses", state.expenses.filter((expense) => expense.status === "Approved").length],
+            ["Reimbursed Expenses", state.expenses.filter((expense) => expense.status === "Reimbursed").length]
+          ],
+          Manager: [
+            ["Pending Expense Approvals", state.expenses.filter((expense) => expense.status === "Pending").length],
+            ["Approved Expenses", state.expenses.filter((expense) => expense.status === "Approved").length],
+            ["Rejected Expenses", state.expenses.filter((expense) => expense.status === "Rejected").length],
+            ["Team Expense Summary", money(total)],
+            ["Team Members", state.employees.filter((employee) => employee.managerId === "EMP-2001").length]
+          ],
+          Finance: [
+            ["Pending Reimbursements", state.expenses.filter((expense) => expense.status === "Approved").length],
+            ["Approved Claims", state.expenses.filter((expense) => expense.status === "Approved").length],
+            ["Monthly Expense Summary", money(total)],
+            ["Category-wise Breakdown", categories.length],
+            ["Reimbursed Claims", state.expenses.filter((expense) => expense.status === "Reimbursed").length]
+          ],
+          Employee: [
+            ["Total Submitted Expenses", expenses.length],
+            ["Pending Claims", expenses.filter((expense) => expense.status === "Pending").length],
+            ["Approved Claims", expenses.filter((expense) => expense.status === "Approved").length],
+            ["Reimbursed Amount", money(expenses.filter((expense) => expense.status === "Reimbursed").reduce((sum, expense) => sum + expense.amount, 0))],
+            ["Recent Expense History", expenses.length]
+          ]
+        };
+        byId("metrics").innerHTML = metricSets[currentRole]
+          .map(([label, value]) => `<div class="card"><p class="label">${label}</p><p class="value">${value}</p></div>`)
+          .join("");
+      }
+
+      function renderSelectors() {
+        byId("employee-manager").innerHTML = `<option value="">No manager</option>` + state.employees
+          .map((employee) => `<option value="${employee.id}">${employee.name}</option>`)
+          .join("");
+        byId("expense-employee").innerHTML = state.employees
+          .map((employee) => `<option value="${employee.id}">${employee.name}</option>`)
+          .join("");
+        byId("expense-employee").disabled = currentRole === "Employee";
+        byId("expense-employee").value = currentRole === "Employee" ? currentEmployeeId() : byId("expense-employee").value || currentEmployeeId();
+        byId("expense-category").innerHTML = categories.map((category) => `<option>${category}</option>`).join("");
+        if (!byId("expense-date").value) byId("expense-date").value = new Date().toISOString().slice(0, 10);
+      }
+
+      function renderEmployees() {
+        byId("employee-rows").innerHTML = state.employees.map((employee) => `
+          <tr>
+            <td><strong>${employee.id}</strong></td>
+            <td>${employee.name}</td>
+            <td>${employee.email}</td>
+            <td>${employee.department}</td>
+            <td>${employee.designation}</td>
+            <td>
+              <button type="button" data-edit-employee="${employee.id}">Edit</button>
+              <button class="danger" type="button" data-delete-employee="${employee.id}">Delete</button>
+            </td>
+          </tr>
+        `).join("");
+      }
+
+      function renderApprovals() {
+        const candidates = currentRole === "Finance"
+          ? state.expenses.filter((expense) => expense.status === "Approved")
+          : visibleExpenses();
+        byId("approval-list").innerHTML = candidates.map((expense) => `
+          <div class="expense-card">
+            <div class="expense-head">
+              <div>
+                <strong>${expense.title}</strong>
+                <p class="label">${employeeName(expense.employeeId)} - ${expense.category} - ${money(expense.amount)}</p>
+                <p class="label">Manager: ${expense.managerDecision} | Finance: ${expense.financeDecision}</p>
+              </div>
+              <span class="pill ${expense.status}">${expense.status}</span>
+            </div>
+            <div class="actions">
+              <button type="button" data-approve="${expense.id}" ${currentRole === "Employee" ? "disabled" : ""}>Approve</button>
+              <button class="danger" type="button" data-reject="${expense.id}" ${currentRole === "Employee" ? "disabled" : ""}>Reject</button>
+              <button class="accent" type="button" data-reimburse="${expense.id}" ${currentRole === "Employee" ? "disabled" : ""}>Reimburse</button>
+            </div>
+          </div>
+        `).join("") || `<p class="label">No expenses for this queue.</p>`;
+      }
+
+      function renderExpenses() {
+        byId("expense-rows").innerHTML = visibleExpenses().map((expense) => `
+          <tr>
+            <td><strong>${expense.title}</strong><p class="label">${expense.description || ""}</p></td>
+            <td>${employeeName(expense.employeeId)}</td>
+            <td>${expense.category}</td>
+            <td>${expense.date}</td>
+            <td>${money(expense.amount)}</td>
+            <td><span class="pill ${expense.status}">${expense.status}</span></td>
+            <td>${expense.receiptName || "Not uploaded"}</td>
+          </tr>
+        `).join("");
+      }
+
+      function renderReports() {
+        const expenses = visibleExpenses();
+        const pending = expenses.filter((expense) => expense.status === "Pending").length;
+        const approved = expenses.filter((expense) => expense.status === "Approved").length;
+        const reimbursed = expenses.filter((expense) => expense.status === "Reimbursed").length;
+        const grouping = byId("report-grouping").value;
+        const totals = new Map();
+        expenses.forEach((expense) => {
+          const key = grouping === "Employee-wise" ? employeeName(expense.employeeId) : grouping === "Category-wise" ? expense.category : expense.status;
+          totals.set(key, (totals.get(key) || 0) + expense.amount);
+        });
+        const rows = Array.from(totals.entries()).sort((a, b) => b[1] - a[1]);
+        const max = Math.max(1, ...rows.map((row) => row[1]));
+        byId("report-output").innerHTML = `
+          <div class="card"><p class="label">Pending Claims</p><p class="value">${pending}</p></div>
+          <div class="card"><p class="label">Approved Claims</p><p class="value">${approved}</p></div>
+          <div class="card"><p class="label">Reimbursed Claims</p><p class="value">${reimbursed}</p></div>
+          <div class="card wide">
+            <strong>${byId("report-period").value} ${grouping} Expenses</strong>
+            ${rows.map(([label, amount]) => `
+              <div class="bar-row">
+                <div><p>${label}</p><div class="bar"><span style="width:${Math.max(8, (amount / max) * 100)}%"></span></div></div>
+                <strong>${money(amount)}</strong>
+              </div>
+            `).join("") || `<p class="label" style="margin-top:12px">No report data yet.</p>`}
+          </div>
+        `;
+      }
+
+      function setExpenseStatus(id, status) {
+        state.expenses = state.expenses.map((expense) => {
+          if (expense.id !== id) return expense;
+          const update = { ...expense, status };
+          if (status === "Approved") update.managerDecision = "Approved";
+          if (status === "Rejected") update.managerDecision = "Rejected";
+          if (status === "Reimbursed") {
+            update.managerDecision = "Approved";
+            update.financeDecision = "Approved";
+          }
+          return update;
+        });
+        saveState();
+        render();
+        notice(`Expense ${status.toLowerCase()}.`);
+      }
+
+      document.querySelectorAll("[data-role]").forEach((button) => {
+        button.addEventListener("click", () => {
+          currentRole = button.dataset.role;
+          render();
+        });
+      });
+
+      byId("employee-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const editId = byId("employee-edit-id").value;
+        const employee = {
+          id: byId("employee-id").value || `EMP-${1000 + state.employees.length + 1}`,
+          name: byId("employee-name").value,
+          email: byId("employee-email").value,
+          department: byId("employee-department").value,
+          designation: byId("employee-designation").value,
+          managerId: byId("employee-manager").value
+        };
+        state.employees = editId
+          ? state.employees.map((item) => item.id === editId ? employee : item)
+          : [employee, ...state.employees];
+        event.target.reset();
+        byId("employee-edit-id").value = "";
+        byId("employee-submit").textContent = "Add Employee";
+        saveState();
+        render();
+        notice(editId ? "Employee updated." : "Employee added.");
+      });
+
+      byId("expense-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const receipt = byId("expense-receipt").files[0]?.name || "";
+        state.expenses = [{
+          id: `EXP-${Math.floor(100 + Math.random() * 900)}`,
+          employeeId: byId("expense-employee").value,
+          title: byId("expense-name").value,
+          category: byId("expense-category").value,
+          amount: Number(byId("expense-amount").value),
+          date: byId("expense-date").value,
+          description: byId("expense-description").value,
+          status: "Pending",
+          receiptName: receipt,
+          managerDecision: "Pending",
+          financeDecision: "Pending"
+        }, ...state.expenses];
+        event.target.reset();
+        byId("expense-date").value = new Date().toISOString().slice(0, 10);
+        saveState();
+        render();
+        notice("Expense submitted.");
+      });
+
+      document.addEventListener("click", (event) => {
+        const target = event.target;
+        const editId = target.dataset?.editEmployee;
+        const deleteId = target.dataset?.deleteEmployee;
+        if (editId) {
+          const employee = state.employees.find((item) => item.id === editId);
+          byId("employee-edit-id").value = employee.id;
+          byId("employee-id").value = employee.id;
+          byId("employee-name").value = employee.name;
+          byId("employee-email").value = employee.email;
+          byId("employee-department").value = employee.department;
+          byId("employee-designation").value = employee.designation;
+          byId("employee-manager").value = employee.managerId || "";
+          byId("employee-submit").textContent = "Update Employee";
+        }
+        if (deleteId) {
+          state.employees = state.employees.filter((employee) => employee.id !== deleteId);
+          state.expenses = state.expenses.filter((expense) => expense.employeeId !== deleteId);
+          saveState();
+          render();
+          notice("Employee deleted.");
+        }
+        if (target.dataset?.approve) setExpenseStatus(target.dataset.approve, "Approved");
+        if (target.dataset?.reject) setExpenseStatus(target.dataset.reject, "Rejected");
+        if (target.dataset?.reimburse) setExpenseStatus(target.dataset.reimburse, "Reimbursed");
+        if (target.dataset?.export) exportReport(target.dataset.export);
+      });
+
+      byId("report-period").addEventListener("change", renderReports);
+      byId("report-grouping").addEventListener("change", renderReports);
+      byId("reset-demo").addEventListener("click", () => {
+        state = structuredClone(seed);
+        saveState();
+        render();
+        notice("Demo data reset.");
+      });
+
+      function exportReport(format) {
+        const rows = visibleExpenses().map((expense) => [
+          expense.id,
+          employeeName(expense.employeeId),
+          expense.title,
+          expense.category,
+          expense.amount,
+          expense.date,
+          expense.status,
+          expense.receiptName || ""
+        ]);
+        const csv = [["Expense ID", "Employee", "Title", "Category", "Amount", "Date", "Status", "Receipt"], ...rows]
+          .map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(","))
+          .join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `expense-report-${format.toLowerCase()}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+        notice(`${format} export prepared.`);
+      }
+
+      render();
+    </script>
+  </body>
+</html>
