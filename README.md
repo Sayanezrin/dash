@@ -17,6 +17,19 @@ pnpm install
 pnpm dev
 ```
 
+## Vercel Deployment
+
+This repo includes a root Vercel build that publishes the interactive dashboard preview as the production app:
+
+```powershell
+npm run build
+```
+
+Vercel should use:
+
+- Build command: `npm run build`
+- Output directory: `dist`
+
 ## Backend
 
 ```powershell
